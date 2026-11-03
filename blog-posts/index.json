@@ -1,14 +1,1 @@
-[
-  {
-    "slug": "test-title",
-    "title": "Test title",
-    "summary": "A test short description",
-    "category": "Test Category",
-    "author": "Wecoden Technical Research Team",
-    "date": "2026-11-03",
-    "coverImage": "assets/blog/test-title.png",
-    "status": "published",
-    "readTime": 1,
-    "dateLabel": "November 3, 2026"
-  }
-]
+[]
