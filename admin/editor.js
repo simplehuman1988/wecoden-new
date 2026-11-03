@@ -2,6 +2,7 @@
   const owner = 'simplehuman1988';
   const repo = 'wecoden-new';
   const tokenKey = 'wecoden-blog-editor-token';
+  const draftsKey = 'wecoden-blog-editor-drafts';
   const apiRoot = `https://api.github.com/repos/${owner}/${repo}/contents/`;
   const $ = (id) => document.getElementById(id);
   const form = $('post-form');
@@ -195,44 +196,59 @@
     $('disconnect-button').classList.toggle('hidden', !connected);
     $('setup-note').classList.toggle('hidden', connected);
     $('connection-status').textContent = connected
-      ? 'Connected. Your edits are saved to the Wecoden website repository.'
+      ? 'Connected. Published posts are saved to the website; drafts stay in this browser.'
       : 'Connect once with the site owner’s publishing token. It stays in this browser only.';
     if (connected) loadPosts();
+  }
+
+  function readLocalDrafts() {
+    try { return JSON.parse(localStorage.getItem(draftsKey) || '{}'); }
+    catch { return {}; }
   }
 
   async function loadPosts() {
     $('post-list-hint').textContent = 'Loading posts…';
     $('post-list').replaceChildren();
+    let savedPosts = [];
     try {
       const files = await github('content/blog-posts');
       const sources = Array.isArray(files) ? files.filter((file) => file.name.endsWith('.json')) : [];
-      currentPosts = await Promise.all(sources.map(async (file) => {
+      savedPosts = await Promise.all(sources.map(async (file) => {
         const entry = await github(`content/blog-posts/${encodeURIComponent(file.name)}`);
         return JSON.parse(decodeBase64(entry.content));
       }));
-      currentPosts.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-      $('post-list-hint').textContent = currentPosts.length ? '' : 'No posts yet. Start with “Write a new post”.';
-      currentPosts.forEach((post) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'post-entry';
-        button.dataset.slug = post.slug;
-        const title = document.createElement('strong');
-        title.textContent = post.title || 'Untitled post';
-        const meta = document.createElement('span');
-        meta.textContent = `${post.status === 'published' ? 'Published' : 'Draft'} · ${post.date || 'No date'}`;
-        button.append(title, meta);
-        button.addEventListener('click', () => openPost(post));
-        $('post-list').append(button);
-      });
     } catch (error) {
       if (error.status === 404) {
-        currentPosts = [];
-        $('post-list-hint').textContent = 'No posts yet. Start with “Write a new post”.';
+        savedPosts = [];
       } else {
         $('post-list-hint').textContent = `Could not load posts: ${error.message}`;
+        return;
       }
     }
+    const localDrafts = readLocalDrafts();
+    currentPosts = savedPosts.map((post) => localDrafts[post.slug]
+      ? { ...localDrafts[post.slug], _localDraft: true, _wasPublished: true }
+      : post);
+    Object.values(localDrafts).forEach((post) => {
+      if (!currentPosts.some((saved) => saved.slug === post.slug)) {
+        currentPosts.push({ ...post, _localDraft: true, _wasPublished: false });
+      }
+    });
+    currentPosts.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    $('post-list-hint').textContent = currentPosts.length ? '' : 'No posts yet. Start with “Write a new post”.';
+    currentPosts.forEach((post) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'post-entry';
+      button.dataset.slug = post.slug;
+      const title = document.createElement('strong');
+      title.textContent = post.title || 'Untitled post';
+      const meta = document.createElement('span');
+      meta.textContent = `${post._localDraft ? 'Draft · This browser' : 'Published'} · ${post.date || 'No date'}`;
+      button.append(title, meta);
+      button.addEventListener('click', () => openPost(post));
+      $('post-list').append(button);
+    });
   }
 
   function clearForm() {
@@ -309,7 +325,7 @@
 
     let coverImage = existingCover;
     let coverUpload = null;
-    if (file) {
+    if (file && status === 'published') {
       const extension = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
       const imagePath = `assets/blog/${slug}.${extension}`;
       coverUpload = { path: imagePath, base64: await readFileAsBase64(file) };
@@ -327,6 +343,22 @@
       coverImage,
       status,
     };
+    if (status === 'draft') {
+      const drafts = readLocalDrafts();
+      const previousPost = currentPosts.find((item) => item.slug === slug);
+      drafts[slug] = { ...post, _wasPublished: Boolean(previousPost?.status === 'published' || previousPost?._wasPublished) };
+      localStorage.setItem(draftsKey, JSON.stringify(drafts));
+      $('original-slug').value = slug;
+      $('form-heading').textContent = 'Edit draft';
+      $('slug').disabled = true;
+      $('save-state').textContent = 'Draft · This browser';
+      $('delete-post').classList.remove('hidden');
+      message(file
+        ? 'Draft saved in this browser. The selected cover image will upload when you publish; select it again if you close this page.'
+        : 'Draft saved in this browser. It is not in the public site; choose Publish when it is ready.');
+      await loadPosts();
+      return;
+    }
     const clean = (item) => ({
       slug: item.slug, title: item.title, summary: item.summary,
       category: item.category || 'Wecoden Journal', author: item.author || 'Wecoden',
@@ -334,7 +366,7 @@
     });
     const allPosts = currentPosts.filter((item) => item.slug !== slug).map(clean).concat(clean(post));
     const visiblePosts = publishedPosts(allPosts);
-    const previouslyPublished = currentPosts.some((item) => item.slug === slug && item.status === 'published');
+    const previouslyPublished = currentPosts.some((item) => item.slug === slug && (item.status === 'published' || item._wasPublished));
     const changes = [
       { path: `content/blog-posts/${slug}.json`, content: JSON.stringify(post, null, 2) + '\n' },
       { path: 'blog-posts/index.json', content: JSON.stringify(listingPosts(visiblePosts), null, 2) + '\n' },
@@ -344,6 +376,9 @@
     ];
     if (coverUpload) changes.push(coverUpload);
     await commitFiles(changes);
+    const savedDrafts = readLocalDrafts();
+    delete savedDrafts[slug];
+    localStorage.setItem(draftsKey, JSON.stringify(savedDrafts));
     $('original-slug').value = slug;
     $('form-heading').textContent = 'Edit post';
     $('slug').disabled = true;
@@ -360,7 +395,19 @@
   async function deletePost() {
     const slug = $('original-slug').value;
     const post = currentPosts.find((item) => item.slug === slug);
-    if (!post || !window.confirm(`Delete “${post.title}”? This also removes its published page when the site refreshes.`)) return;
+    if (!post || !window.confirm(post._localDraft
+      ? `Delete the browser draft “${post.title}”?${post._wasPublished ? ' The published article will stay on the website.' : ''}`
+      : `Delete “${post.title}”? This also removes its published page when the site refreshes.`)) return;
+    if (post._localDraft) {
+      const drafts = readLocalDrafts();
+      delete drafts[slug];
+      localStorage.setItem(draftsKey, JSON.stringify(drafts));
+      clearForm();
+      $('form-heading').textContent = 'Create a post';
+      message(post._wasPublished ? 'Draft deleted. The published article is unchanged.' : 'Draft deleted from this browser.');
+      await loadPosts();
+      return;
+    }
     const remaining = currentPosts.filter((item) => item.slug !== slug).map((item) => ({
       slug: item.slug, title: item.title, summary: item.summary,
       category: item.category || 'Wecoden Journal', author: item.author || 'Wecoden',
