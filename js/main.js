@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAccordions();
   initServiceFilters();
   initContactForms();
-  initCarbonBadge();
 });
 
 /**
@@ -187,36 +186,49 @@ function initContactForms() {
 
   const forms = document.querySelectorAll('[data-wecoden-form]');
   forms.forEach((form) => {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const statusEl = form.querySelector('.form-status-msg');
       const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-      }
+      if (submitBtn) submitBtn.disabled = true;
       if (statusEl) {
         statusEl.style.display = 'block';
-        statusEl.innerHTML =
-          '<span style="color: #0a0a0a; font-weight: 500;">✓ Thank you. Your inquiry has been recorded — our technical co-founders will respond within 1 business day at hello@wecoden.com.</span>';
+        statusEl.textContent = 'Sending your inquiry…';
+        statusEl.classList.remove('form-status-error');
       }
-      form.reset();
-      pills.forEach((p) => p.classList.remove('selected'));
+
+      const serviceInput = form.querySelector('[name="services"]');
+      if (serviceInput) {
+        serviceInput.value = Array.from(form.querySelectorAll('.service-pill.selected'))
+          .map((pill) => pill.textContent.trim()).join(', ');
+      }
+
+      try {
+        const payload = new URLSearchParams();
+        new FormData(form).forEach((value, key) => payload.append(key, value));
+        const response = await fetch('https://formsubmit.co/ajax/hello@wecoden.com', {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: payload,
+        });
+        const result = await response.json();
+        if (!response.ok || result.success === false || result.success === 'false') {
+          throw new Error(result.message || 'The form service could not save your inquiry.');
+        }
+        if (statusEl) {
+          statusEl.textContent = 'Thank you. Your inquiry has been sent to the Wecoden team. We’ll reply within 1 business day.';
+          statusEl.classList.remove('form-status-error');
+        }
+        form.reset();
+        pills.forEach((pill) => pill.classList.remove('selected'));
+      } catch (error) {
+        if (statusEl) {
+          statusEl.textContent = `${error.message || 'We could not send your inquiry.'} Please try again or email hello@wecoden.com.`;
+          statusEl.classList.add('form-status-error');
+        }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
     });
   });
-}
-
-/**
- * 7. Website Carbon Badge Integration (Official Script + Architectural Fallback)
- */
-function initCarbonBadge() {
-  const wcbContainer = document.getElementById('wcb');
-  if (!wcbContainer) return;
-
-  // Load official Website Carbon badge script asynchronously if online
-  if (window.location.protocol.startsWith('http')) {
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/website-carbon-badges@1.1.3/b.min.js';
-    script.defer = true;
-    document.body.appendChild(script);
-  }
 }

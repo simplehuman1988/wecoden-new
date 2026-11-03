@@ -1832,6 +1832,11 @@ button {
   gap: 7px;
 }
 
+.form-status-msg.form-status-error {
+  color: #9b1c1c;
+  border-color: #efb5b5 !important;
+}
+
 @media (max-width: 700px) {
   .journal-post-grid { grid-template-columns: 1fr; }
   .brand-mark { width: 112px; }
