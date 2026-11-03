@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Journal Editor — Wecoden</title>
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="../index.html"><img src="../assets/wecoden-logo.png" alt="Wecoden"></a>
+    <div><span>JOURNAL</span><strong>Editor</strong></div>
+    <a class="view-site" href="../blog.html">View journal ↗</a>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+      <button class="new-post" id="new-post">＋ &nbsp; Write a new post</button>
+      <div class="list-heading"><h2>Your posts</h2><button id="refresh-posts" title="Refresh posts">↻</button></div>
+      <p id="post-list-hint" class="muted">Connect to the editor to load posts.</p>
+      <div id="post-list" class="post-list"></div>
+      <div class="connection-card">
+        <h3>Editor connection</h3>
+        <p id="connection-status">Connect once with the site owner's publishing token. It stays in this browser only.</p>
+        <button id="connect-button" class="secondary-button">Connect editor</button>
+        <button id="disconnect-button" class="text-button hidden">Disconnect</button>
+      </div>
+    </aside>
+
+    <section class="editor" aria-label="Journal post editor">
+      <div class="editor-heading"><div><p class="eyebrow">WECODEN JOURNAL</p><h1 id="form-heading">Create a post</h1></div><span id="save-state" class="save-state">Not published</span></div>
+      <div id="setup-note" class="notice"><strong>One-time setup:</strong> connect this editor using a GitHub fine-grained token with access to the <code>wecoden-new</code> repository and <em>Contents: Read and write</em>. Ask the site owner to complete this step. The token is kept only in this browser.</div>
+      <form id="post-form">
+        <input type="hidden" id="original-slug">
+        <div class="field"><label for="title">Post title</label><input id="title" name="title" required maxlength="120" placeholder="A clear, useful headline"></div>
+        <div class="split-fields">
+          <div class="field"><label for="slug">Page address</label><div class="slug-field"><span>wecoden.com/blog-posts/</span><input id="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="post-name"><span>.html</span></div><small>Lowercase words separated by hyphens.</small></div>
+          <div class="field"><label for="category">Category</label><input id="category" maxlength="60" placeholder="Cloud Architecture · Scale"></div>
+        </div>
+        <div class="field"><label for="summary">Short introduction</label><textarea id="summary" rows="3" maxlength="240" required placeholder="A short description shown on the Journal page and search results."></textarea><small><span id="summary-count">0</span>/240</small></div>
+        <div class="split-fields">
+          <div class="field"><label for="author">Author</label><input id="author" value="Wecoden Technical Research Team" maxlength="80"></div>
+          <div class="field"><label for="date">Publish date</label><input id="date" type="date" required></div>
+        </div>
+        <div class="field"><label for="cover">Cover image <span class="optional">Optional</span></label><input id="cover" type="file" accept="image/png,image/jpeg,image/webp"><small>Choose a JPG, PNG or WebP image up to 5 MB.</small><div id="cover-preview" class="cover-preview hidden"></div></div>
+        <div class="field"><div class="label-row"><label for="body">Article</label><span class="optional">Use the toolbar to format your text</span></div>
+          <div class="toolbar" aria-label="Formatting controls">
+            <button type="button" data-wrap="**" title="Bold"><b>B</b></button><button type="button" data-wrap="*" title="Italic"><i>I</i></button><button type="button" data-prefix="## ">Heading</button><button type="button" data-prefix="- ">• List</button><button type="button" data-link="true">Add link</button>
+          </div>
+          <textarea id="body" class="article-input" rows="18" required placeholder="Write your article here. Use a blank line between paragraphs.&#10;&#10;Use the toolbar to add headings, bold text, links, and lists."></textarea>
+          <small>Separate paragraphs with a blank line. Headings and lists will match the Wecoden Journal styling.</small>
+        </div>
+        <div class="form-footer"><button type="button" id="delete-post" class="delete-button hidden">Delete post</button><div class="form-actions"><button type="button" id="save-draft" class="secondary-button">Save draft</button><button type="submit" id="publish-post" class="primary-button">Publish post</button></div></div>
+        <p id="form-message" class="form-message" role="status"></p>
+      </form>
+    </section>
+  </main>
+  <dialog id="connect-dialog">
+    <form method="dialog" class="dialog-close"><button aria-label="Close">×</button></form>
+    <p class="eyebrow">PUBLISHING ACCESS</p><h2>Connect to the website</h2>
+    <p>Create a fine-grained GitHub token for <code>simplehuman1988/wecoden-new</code> with repository contents read and write access. The owner should do this once on the editor computer.</p>
+    <a class="token-help" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Open GitHub token settings ↗</a>
+    <label for="github-token">Publishing token</label><input id="github-token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <p id="connect-error" class="form-message"></p>
+    <button type="button" id="confirm-connect" class="primary-button">Connect editor</button>
+  </dialog>
+  <script src="editor.js"></script>
+</body>
+</html>
