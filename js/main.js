@@ -197,7 +197,7 @@ function initContactForms() {
       if (statusEl) {
         statusEl.style.display = 'block';
         statusEl.innerHTML =
-          '<span style="color: #0a0a0a; font-weight: 500;">✓ Thank you. Your inquiry has been recorded — our technical co-founders will respond within 1 business day at build@wecoden.com.</span>';
+          '<span style="color: #0a0a0a; font-weight: 500;">✓ Thank you. Your inquiry has been recorded — our technical co-founders will respond within 1 business day at hello@wecoden.com.</span>';
       }
       form.reset();
       pills.forEach((p) => p.classList.remove('selected'));

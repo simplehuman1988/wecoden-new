@@ -146,7 +146,7 @@ def page(post, body):
       </article>
       <section class="prefooter-section"><div class="container"><div class="prefooter-grid">
         <div class="prefooter-left"><span class="eyebrow eyebrow-dark">Wecoden · Technical Marketers &amp; Managed IT</span><h2 class="h-section">Let’s put the value of your technology in the spotlight.</h2><p class="lead">Whether you need authoritative B2B technical content or managed infrastructure, our team is ready to help.</p></div>
-        <div class="prefooter-right"><div class="prefooter-meta-block"><span class="eyebrow">EMAIL</span><a href="mailto:build@wecoden.com">build@wecoden.com</a></div><a href="../contact-us.html" class="btn btn-primary btn-full">Start a Conversation</a></div>
+        <div class="prefooter-right"><div class="prefooter-meta-block"><span class="eyebrow">EMAIL</span><a href="mailto:hello@wecoden.com">hello@wecoden.com</a></div><a href="../contact-us.html" class="btn btn-primary btn-full">Start a Conversation</a></div>
       </div></div></section>
     </main>
     <footer class="site-footer"><div class="container"><div class="footer-wordmark-wrap"><div class="footer-wordmark"><img src="../assets/wecoden-logo.png" alt="Wecoden"></div></div><div class="footer-bottom-bar"><span>© 2026 WECODEN. All rights reserved.</span><a href="../blog.html">All Journal Articles</a></div></div></footer>
